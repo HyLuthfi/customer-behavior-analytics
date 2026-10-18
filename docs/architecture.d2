@@ -1,0 +1,266 @@
+direction: right
+
+title: {
+  label: "Customer Behavior Analytics — Unsupervised ML & RFM Segmentation Architecture"
+  near: top-center
+  shape: text
+  style: {
+    font-size: 24
+    bold: true
+    font-color: "#f8fafc"
+  }
+}
+
+# ─────────────────────────────────────────
+# DATA INGESTION & SANITIZATION LAYER
+# ─────────────────────────────────────────
+ingestion_layer: Data Ingestion & Sanitization {
+  style: {
+    fill: "#030712"
+    stroke: "#38bdf8"
+    border-radius: 12
+    font-color: "#7dd3fc"
+    bold: true
+  }
+
+  raw_source: "Retail Transaction Records\nCSV / XLSX Upload Stream\n(st.file_uploader)" {
+    shape: cylinder
+    style: {
+      fill: "#082f49"
+      stroke: "#0284c7"
+      font-color: "#f0f9ff"
+    }
+  }
+
+  cleaning_engine: "Automated Data Sanitizer\ndropna(CustomerID)\nQuantity > 0 · UnitPrice > 0\ndrop_duplicates() in-memory" {
+    shape: rectangle
+    style: {
+      fill: "#0b1329"
+      stroke: "#0369a1"
+      font-color: "#bae6fd"
+    }
+  }
+
+  sanitized_df: "Cleaned Transaction Buffer\nNormalized Columns & Schema\nTotalAmount = Qty × UnitPrice" {
+    shape: rectangle
+    style: {
+      fill: "#0b1329"
+      stroke: "#38bdf8"
+      font-color: "#e0f2fe"
+    }
+  }
+
+  raw_source -> cleaning_engine: parses byte stream
+  cleaning_engine -> sanitized_df: filters anomalies
+}
+
+# ─────────────────────────────────────────
+# RFM FEATURE ENGINEERING ENGINE
+# ─────────────────────────────────────────
+rfm_engine: RFM Feature Engineering Engine {
+  style: {
+    fill: "#051814"
+    stroke: "#10b981"
+    border-radius: 12
+    font-color: "#6ee7b7"
+    bold: true
+  }
+
+  recency_calc: "Recency (R)\nDays Since Last Purchase\n(T_ref - max(InvoiceDate))" {
+    shape: rectangle
+    style: {
+      fill: "#062e24"
+      stroke: "#059669"
+      font-color: "#a7f3d0"
+    }
+  }
+
+  frequency_calc: "Frequency (F)\nTotal Unique Orders\ncount_distinct(InvoiceNo)" {
+    shape: rectangle
+    style: {
+      fill: "#062e24"
+      stroke: "#059669"
+      font-color: "#a7f3d0"
+    }
+  }
+
+  monetary_calc: "Monetary (M)\nCumulative Expenditure\nsum(TotalAmount)" {
+    shape: rectangle
+    style: {
+      fill: "#062e24"
+      stroke: "#059669"
+      font-color: "#a7f3d0"
+    }
+  }
+
+  rfm_matrix: "RFM Feature Matrix\n[CustomerID, R, F, M]\n@st.cache_data Optimizer" {
+    shape: rectangle
+    style: {
+      fill: "#062e24"
+      stroke: "#10b981"
+      font-color: "#d1fae5"
+    }
+  }
+
+  recency_calc -> rfm_matrix: aggregate
+  frequency_calc -> rfm_matrix: aggregate
+  monetary_calc -> rfm_matrix: aggregate
+}
+
+# ─────────────────────────────────────────
+# FEATURE SCALING & PREPROCESSING
+# ─────────────────────────────────────────
+scaling_layer: Feature Normalization {
+  style: {
+    fill: "#191100"
+    stroke: "#f59e0b"
+    border-radius: 12
+    font-color: "#fde68a"
+    bold: true
+  }
+
+  minmax_scaler: "MinMaxScaler Scaling [0, 1]\nEliminates Unit Variance\nx_scaled = (x - min) / (max - min)" {
+    shape: rectangle
+    style: {
+      fill: "#451a03"
+      stroke: "#d97706"
+      font-color: "#fef3c7"
+    }
+  }
+
+  scaled_tensor: "Normalized 3D Feature Space\nfit_transform(RFM.values)\nPreserves Relative Distance" {
+    shape: rectangle
+    style: {
+      fill: "#451a03"
+      stroke: "#f59e0b"
+      font-color: "#fef3c7"
+    }
+  }
+
+  minmax_scaler -> scaled_tensor: normalizes vectors
+}
+
+# ─────────────────────────────────────────
+# UNSUPERVISED CLUSTERING & SEGMENTATION
+# ─────────────────────────────────────────
+clustering_core: Unsupervised Machine Learning Core {
+  style: {
+    fill: "#0f172a"
+    stroke: "#818cf8"
+    border-radius: 12
+    font-color: "#c7d2fe"
+    bold: true
+  }
+
+  kmeans_algo: "K-Means Clustering Engine\nk = 3 Clusters (n_init=10)\nrandom_state=42 (Deterministic)\nMinimizes WCSS Inertia" {
+    shape: rectangle
+    style: {
+      fill: "#1e1b4b"
+      stroke: "#6366f1"
+      font-color: "#e0e7ff"
+    }
+  }
+
+  centroid_sorter: "Centroid Monetary Sorter\nSorts Clusters by Mean Spend\nMaps 0, 1, 2 to Business Labels" {
+    shape: rectangle
+    style: {
+      fill: "#1e1b4b"
+      stroke: "#818cf8"
+      font-color: "#c7d2fe"
+    }
+  }
+
+  segments_def: "3 Business Segments\n1. High-Value (Champions)\n2. Medium-Value (Regulars)\n3. Low-Value (At-Risk / Churn)" {
+    shape: rectangle
+    style: {
+      fill: "#1e1b4b"
+      stroke: "#a5b4fc"
+      font-color: "#f5f3ff"
+    }
+  }
+
+  kmeans_algo -> centroid_sorter: fit_predict labels
+  centroid_sorter -> segments_def: monetary mapping
+}
+
+# ─────────────────────────────────────────
+# STREAMLIT PRESENTATION & 3D VISUALIZER
+# ─────────────────────────────────────────
+dashboard_layer: Streamlit Presentation & Business Intelligence {
+  style: {
+    fill: "#1e0e29"
+    stroke: "#c084fc"
+    border-radius: 12
+    font-color: "#e9d5ff"
+    bold: true
+  }
+
+  app_shell: "Streamlit Web App (:8501)\nClean White Aesthetic\nPlus Jakarta Sans Typography\nIn-Memory Buffer Processing" {
+    shape: rectangle
+    style: {
+      fill: "#2e1065"
+      stroke: "#9333ea"
+      font-color: "#f3e8ff"
+    }
+  }
+
+  tab_suite: "4 Interactive Analytics Tabs\nTab 1: Panduan Dataset\nTab 2: Dashboard Bisnis & Donut\nTab 3: 3D Cluster Explorer\nTab 4: Tabel Data RFM & Export" {
+    shape: rectangle
+    style: {
+      fill: "#2e1065"
+      stroke: "#a855f7"
+      font-color: "#e9d5ff"
+    }
+  }
+
+  plotly_3d: "Plotly 3D Interactive Scatter\nAxes: Recency × Frequency × Monetary\nSize: Monetary · Color: Segment\n360° Rotatable Orbit View" {
+    shape: rectangle
+    style: {
+      fill: "#3b0764"
+      stroke: "#c084fc"
+      font-color: "#fae8ff"
+    }
+  }
+
+  app_shell -> tab_suite: mounts tabs
+  tab_suite -> plotly_3d: renders 3D space
+}
+
+# ─────────────────────────────────────────
+# DATA FLOW INTERCONNECTIONS
+# ─────────────────────────────────────────
+
+ingestion_layer.sanitized_df -> rfm_engine.recency_calc: "InvoiceDate deltas" {
+  style.stroke: "#38bdf8"
+  style.stroke-width: 2
+}
+
+ingestion_layer.sanitized_df -> rfm_engine.frequency_calc: "InvoiceNo counts" {
+  style.stroke: "#38bdf8"
+  style.stroke-width: 2
+}
+
+ingestion_layer.sanitized_df -> rfm_engine.monetary_calc: "TotalAmount sums" {
+  style.stroke: "#38bdf8"
+  style.stroke-width: 2
+}
+
+rfm_engine.rfm_matrix -> scaling_layer.minmax_scaler: "Raw [R, F, M] Vectors" {
+  style.stroke: "#10b981"
+  style.stroke-width: 2
+}
+
+scaling_layer.scaled_tensor -> clustering_core.kmeans_algo: "Normalized Vectors [0, 1]" {
+  style.stroke: "#f59e0b"
+  style.stroke-width: 2
+}
+
+clustering_core.segments_def -> dashboard_layer.tab_suite: "Segmented Customer DataFrame" {
+  style.stroke: "#818cf8"
+  style.stroke-width: 2
+}
+
+clustering_core.segments_def -> dashboard_layer.plotly_3d: "Cluster Labels & Centroids" {
+  style.stroke: "#c084fc"
+  style.stroke-width: 2
+}
